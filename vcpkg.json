@@ -1,0 +1,16 @@
+{
+  "dependencies": [
+    "boost-describe",
+    "boost-mp11",
+    "boost-test",
+    "boost-program-options",
+    "boost-iostreams",
+    "boost-log",
+    "boost-url",
+    "boost-stl-interfaces",
+    "boost-spirit",
+    "boost-histogram",
+    "boost-process",
+    "boost-format"
+  ]
+}

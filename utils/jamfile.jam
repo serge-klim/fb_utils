@@ -1,0 +1,69 @@
+alias utils_platform_specific
+       : win/thread.cpp
+         win/sysinfo.cpp
+         win/memory.cpp
+         win/huge_pages.cpp         
+       : <target-os>windows
+       ;
+
+alias utils_platform_specific
+      : posix/thread.cpp
+        posix/sysinfo.cpp
+        posix/memory.cpp
+        posix/huge_pages.cpp         
+      : 
+      ;
+
+
+lib utils	: utils_platform_specific
+			: <library>/boost//headers
+			: # no default build
+			: <include>..
+			;
+
+alias utils_program_options	:
+							:
+							: # no default build
+							: <include>..
+                              <library>/boost//headers
+							  <library>/boost//program_options/<link>static                            
+							;
+
+
+lib utils_program_options_log :	program_options/log.cpp
+							  : 
+							  : <include>..
+                                <library>/boost//headers
+								<library>/boost//program_options/<link>static
+								<library>/boost//log/<link>static
+								<library>/boost//log_setup/<link>static
+							  ;
+
+
+alias nic_addresses_platform_specific
+       : win/nic_addresses.cpp
+       : <target-os>windows
+       ;
+
+alias nic_addresses_platform_specific
+      : posix/nic_addresses.cpp
+      : 
+      ;
+
+
+lib nic_addresses
+            : nic_addresses_platform_specific
+            : <include>..
+              <library>/boost//headers
+              <library>/boost//program_options/<link>static
+          ;
+
+
+
+using testing ;
+unit-test test :
+        test.cpp
+        utils
+        /boost//headers
+		/boost//unit_test_framework/<link>static
+    ;
