@@ -26,7 +26,7 @@ inline void validate(boost::any& v, std::vector<std::string> const& values, boos
    /*boost::program_options::*/ validators::check_first_occurrence(v);
    auto const& value = boost::program_options::validators::get_single_string(values);
    auto error = boost::system::error_code{};
-   auto address = boost::asio::ip::address::from_string(value, error);
+   auto address = boost::asio::ip::make_address(value, error);
    if (!!error)
        throw std::runtime_error{"can't parse ip address \"" + value + "\" : " + error.message()};
    v = boost::any(std::move(address));
@@ -37,7 +37,7 @@ inline void validate(boost::any& v, std::vector<std::string> const& values, boos
    /*boost::program_options::*/ validators::check_first_occurrence(v);
    auto const& value = boost::program_options::validators::get_single_string(values);
    auto error = boost::system::error_code{};
-   auto address = boost::asio::ip::address_v4::from_string(value, error);
+   auto address = boost::asio::ip::make_address_v4(value, error);
    if (!!error)
        throw std::runtime_error{"can't parse ip v4 address \"" + value + "\" : " + error.message()};
    v = boost::any(std::move(address));
@@ -48,7 +48,7 @@ inline void validate(boost::any& v, std::vector<std::string> const& values, boos
    /*boost::program_options::*/ validators::check_first_occurrence(v);
    auto const& value = boost::program_options::validators::get_single_string(values);
    auto error = boost::system::error_code{};
-   auto address = boost::asio::ip::address_v6::from_string(value, error);
+   auto address = boost::asio::ip::make_address_v6(value, error);
    if (!!error)
        throw std::runtime_error{"can't parse ip v6 address \"" + value + "\" : " + error.message()};
    v = boost::any(std::move(address));
