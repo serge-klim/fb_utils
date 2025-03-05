@@ -13,7 +13,9 @@ inline namespace v1 {
 namespace detail {
 
 struct sys_set_info_iterator : boost::stl_interfaces::iterator_interface<
+#if !BOOST_STL_INTERFACES_USE_DEDUCED_THIS
                                    sys_set_info_iterator,
+#endif
                                    std::forward_iterator_tag,
                                    SYSTEM_CPU_SET_INFORMATION> {
    constexpr sys_set_info_iterator(char const* ptr = nullptr) noexcept : ptr_(ptr) {}
@@ -30,7 +32,9 @@ struct sys_set_info_iterator : boost::stl_interfaces::iterator_interface<
    }
 
    using boost::stl_interfaces::iterator_interface<
+#if !BOOST_STL_INTERFACES_USE_DEDUCED_THIS
        sys_set_info_iterator,
+#endif
        std::forward_iterator_tag,
        SYSTEM_CPU_SET_INFORMATION>::operator++;
 
@@ -69,8 +73,6 @@ constexpr auto end(cpu_set_info const& info) noexcept { return info.cend(); }
 }} // namespace utils::experemental::v1::detail
 #include <boost/stl_interfaces/view_interface.hpp>
 #include <ranges>
-#include <boost/range/iterator_range.hpp>
-#include <vector>
 
 namespace utils::experemental { inline namespace v1 {
 
