@@ -13,17 +13,19 @@ std::thread::native_handle_type utils::this_thread() noexcept {
    return pthread_self();
 }
 
-bool utils::get_thread_afinity(unsigned int /*core_id*/, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+boost::system::error_code utils::get_thread_afinity(unsigned int /*core_id*/, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
    cpu_set_t cpuset;
    CPU_ZERO(&cpuset);
-   return pthread_getaffinity_np(handle, sizeof(cpuset), &cpuset) == 0;
-}
+   auto error = pthread_getaffinity_np(handle, sizeof(cpuset), &cpuset);
+   return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
+ }
 
-bool utils::pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+boost::system::error_code utils::pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
    cpu_set_t cpuset;
    CPU_ZERO(&cpuset);
    CPU_SET(core_id, &cpuset);
-   return pthread_setaffinity_np(handle, sizeof(cpuset), &cpuset) == 0;
+   auto error = pthread_setaffinity_np(handle, sizeof(cpuset), &cpuset) == 0;
+   return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
 }
 
 // bool utils::set_thread_afinity(std::vector<int> const& cpus, std::thread::native_handle_type handle /*= this_thread()*/) noexcept
@@ -52,12 +54,13 @@ bool utils::pin_thread_to_core(unsigned int core_id, std::thread::native_handle_
 ////   return res;
 ////}
 
-bool utils::set_thread_priority(int priority, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+boost::system::error_code utils::set_thread_priority(int priority, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
    // https://man7.org/linux/man-pages/man3/pthread_setschedparam.3.html
    //  auto params = sched_param{0};
    //  params.sched_priority = priority;
    //  return pthread_setschedparam(thread, priority) != 0;
-   return pthread_setschedprio(handle, priority) != 0;
+   auto error = pthread_setschedprio(handle, priority) != 0;
+   return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
 }
 
 boost::system::error_code utils::v1x::set_thread_cpu_set(cpu_set::value_type const* cpu_ids, cpu_set::size_type size, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
@@ -66,8 +69,14 @@ boost::system::error_code utils::v1x::set_thread_cpu_set(cpu_set::value_type con
    auto /*cpu_set_t**/ cpu_set = CPU_ALLOC(nprocs);
    if (cpu_set == nullptr)
       return boost::system::error_code(errno != 0 ? errno : boost::system::errc::not_enough_memory, boost::system::system_category());
-
-   CPU_ZERO_S(nprocs, cpu_set);
+   struct sentry_t {
+      ~sentry_t() {
+         CPU_FREE(cpu_set);
+      }
+      cpu_set_t* cpu_set;
+   } sentry{cpu_set};
+   auto cpu_set_sz = CPU_ALLOC_SIZE(nprocs);
+   CPU_ZERO_S(cpu_set_sz, cpu_set);
    while (size-- != 0) {
       CPU_SET_S(cpu_ids[size], nprocs, cpu_set);
    }
@@ -77,7 +86,7 @@ boost::system::error_code utils::v1x::set_thread_cpu_set(cpu_set::value_type con
    //    if (CPU_ISSET_S(cpu, cpu_set))
    //       cpu_ids[size++] = cpu;
    // }
-   if (auto error = pthread_setaffinity_np(handle, nprocs, cpu_set))
+   if (auto error = pthread_setaffinity_np(handle, cpu_set_sz, cpu_set))
       return boost::system::error_code(error, boost::system::system_category());
    return {};
 }
@@ -89,8 +98,16 @@ utils::v1x::cpu_set utils::v1x::get_thread_cpu_set(std::thread::native_handle_ty
    if (cpu_set == nullptr)
       throw boost::system::system_error(errno != 0 ? errno : boost::system::errc::not_enough_memory, boost::system::system_category());
 
-   CPU_ZERO_S(nprocs, cpu_set);
-   if (auto error = pthread_getaffinity_np(handle, nprocs, cpu_set))
+   struct sentry_t {
+      ~sentry_t() {
+         CPU_FREE(cpu_set);
+      }
+      cpu_set_t* cpu_set;
+   } sentry{cpu_set};
+
+   auto cpu_set_sz = CPU_ALLOC_SIZE(nprocs);
+   CPU_ZERO_S(cpu_set_sz, cpu_set);
+   if (auto error = pthread_getaffinity_np(handle, cpu_set_sz, cpu_set))
       throw boost::system::system_error(error, boost::system::system_category());
 
    auto res = utils::v1x::cpu_set{};

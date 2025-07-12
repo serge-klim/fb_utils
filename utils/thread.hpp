@@ -6,13 +6,13 @@
 namespace utils{
 
 std::thread::native_handle_type this_thread() noexcept;
-bool set_thread_priority(int priority, std::thread::native_handle_type handle = this_thread()) noexcept;
-bool pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle = this_thread()) noexcept;
-bool get_thread_afinity(unsigned int core_id, std::thread::native_handle_type handle = this_thread()) noexcept;    
+boost::system::error_code set_thread_priority(int priority, std::thread::native_handle_type handle = this_thread()) noexcept;
+boost::system::error_code pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle = this_thread()) noexcept;
+boost::system::error_code get_thread_afinity(unsigned int core_id, std::thread::native_handle_type handle = this_thread()) noexcept;
 [[nodiscard]] int getcpu_id() noexcept;
 
 using cpu_set = std::bitset<64>;
-bool set_thread_afinity(utils::cpu_set const& afinity_mask, std::thread::native_handle_type handle = this_thread()) noexcept;
+boost::system::error_code set_thread_afinity(utils::cpu_set const& afinity_mask, std::thread::native_handle_type handle = this_thread()) noexcept;
 
 
 boost::system::error_code set_thread_cpu_set(unsigned long* cpu_ids, std::size_t size, std::thread::native_handle_type handle /*= this_thread()*/) noexcept;

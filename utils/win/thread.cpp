@@ -14,12 +14,16 @@ std::thread::native_handle_type utils::this_thread() noexcept {
    return boost::winapi::GetCurrentThread();
 }
 
-bool utils::pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
-   return SetThreadIdealProcessor(handle, core_id) == (DWORD)-1;
+boost::system::error_code utils::pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+   return SetThreadIdealProcessor(handle, core_id) == (DWORD)-1
+              ? boost::system::error_code(boost::winapi::GetLastError(), boost::system::system_category())
+              : boost::system::error_code{};
 }
 
-bool utils::set_thread_afinity(utils::cpu_set const& afinity_mask, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
-   return SetThreadAffinityMask(handle, afinity_mask.to_ullong()) == (DWORD)-1;
+boost::system::error_code utils::set_thread_afinity(utils::cpu_set const& afinity_mask, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+   return SetThreadAffinityMask(handle, afinity_mask.to_ullong()) == 0
+              ? boost::system::error_code(boost::winapi::GetLastError(), boost::system::system_category())
+              : boost::system::error_code{};
 }
 
 boost::system::error_code utils::set_thread_cpu_set(unsigned long* cpu_ids, std::size_t size, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
@@ -28,8 +32,11 @@ boost::system::error_code utils::set_thread_cpu_set(unsigned long* cpu_ids, std:
               : boost::system::error_code{};
 }
 
-bool utils::set_thread_priority(int priority, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
-   return SetThreadPriority(handle, priority) != FALSE;
+boost::system::error_code utils::set_thread_priority(int priority, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+   return SetThreadPriority(handle, priority) != FALSE 
+       ? boost::system::error_code{} 
+       : boost::system::error_code(boost::winapi::GetLastError(), boost::system::system_category());
+
 }
 
 ///////////////v2
