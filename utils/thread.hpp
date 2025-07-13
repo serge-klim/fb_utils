@@ -6,9 +6,13 @@
 namespace utils{
 
 std::thread::native_handle_type this_thread() noexcept;
-boost::system::error_code set_thread_priority(int priority, std::thread::native_handle_type handle = this_thread()) noexcept;
+boost::system::error_code set_thread_priority(int prio, std::thread::native_handle_type handle = this_thread()) noexcept;
 boost::system::error_code pin_thread_to_core(unsigned int core_id, std::thread::native_handle_type handle = this_thread()) noexcept;
 boost::system::error_code get_thread_afinity(unsigned int core_id, std::thread::native_handle_type handle = this_thread()) noexcept;
+
+enum class priority {low, normal, highest};
+boost::system::error_code set_thread_priority(priority prio, std::thread::native_handle_type handle = this_thread()) noexcept;
+
 [[nodiscard]] int getcpu_id() noexcept;
 
 using cpu_set = std::bitset<64>;

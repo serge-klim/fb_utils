@@ -32,12 +32,33 @@ boost::system::error_code utils::set_thread_cpu_set(unsigned long* cpu_ids, std:
               : boost::system::error_code{};
 }
 
-boost::system::error_code utils::set_thread_priority(int priority, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
-   return SetThreadPriority(handle, priority) != FALSE 
+boost::system::error_code utils::set_thread_priority(int prio, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+   return SetThreadPriority(handle, prio) != FALSE 
        ? boost::system::error_code{} 
        : boost::system::error_code(boost::winapi::GetLastError(), boost::system::system_category());
 
 }
+
+boost::system::error_code utils::set_thread_priority(priority prio, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+    
+   DWORD priority_class = NORMAL_PRIORITY_CLASS;
+   int thread_priority = THREAD_PRIORITY_NORMAL;
+   switch (prio) {
+      case priority::low:
+         thread_priority = THREAD_PRIORITY_BELOW_NORMAL;
+         break;
+      case priority::highest:
+         priority_class = REALTIME_PRIORITY_CLASS;
+         thread_priority = THREAD_PRIORITY_TIME_CRITICAL;
+         break;
+      case priority::normal:
+   }
+
+   return SetPriorityClass(GetCurrentProcess(), priority_class) == 0
+      ? boost::system::error_code(boost::winapi::GetLastError(), boost::system::system_category())
+      : set_thread_priority(thread_priority, handle);
+}
+
 
 ///////////////v2
 

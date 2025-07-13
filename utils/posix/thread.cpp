@@ -63,6 +63,35 @@ boost::system::error_code utils::set_thread_priority(int priority, std::thread::
    return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
 }
 
+boost::system::error_code utils::set_thread_priority(priority prio, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
+
+   int policy = SCHED_OTHER;
+   struct sched_param sh_param{0};
+   sh_param.sched_priority = sched_get_priority_min(policy);
+   switch (prio) {
+      case priority::low:
+         //sh_param.sched_priority = sched_get_priority_min(policy);
+         break;
+      case priority::highest:
+         policy = SCHED_RR;
+         sh_param.sched_priority = sched_get_priority_max(policy);
+         break;
+      case priority::normal:
+         //https://github.com/DPDK/dpdk/blob/main/lib/eal/unix/rte_thread.c#L48
+         /*
+          * Choose the middle of the range to represent the priority
+          * 'normal'.
+          * On Linux, this should be 0, since both
+          * sched_get_priority_min/_max return 0 for SCHED_OTHER.
+          */
+         sh_param.sched_priority = (sh_param.sched_priority + sched_get_priority_max(policy)) / 2;
+         break;
+   }
+
+   auto error = pthread_setschedparam(handle, policy, &sh_param);
+   return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
+}
+
 boost::system::error_code utils::v1x::set_thread_cpu_set(cpu_set::value_type const* cpu_ids, cpu_set::size_type size, std::thread::native_handle_type handle /*= this_thread()*/) noexcept {
    auto nprocs = get_nprocs_conf();
    assert(nprocs != 0);

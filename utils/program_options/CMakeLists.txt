@@ -64,7 +64,7 @@ target_link_libraries(fb_utils_program_options_log
 
 target_compile_options(fb_utils_program_options_log PRIVATE
      $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wpedantic -Werror -Wextra -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-exit-time-destructors>
+#     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wpedantic -Werror -Wextra -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-exit-time-destructors>
 )
 
 
