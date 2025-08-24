@@ -4,12 +4,15 @@ add_executable (fb_utils_test
 		test.cpp
         test_flags.cpp
 		test_net_parsers.cpp
+		test_ini_parser.cpp
 		histogram_test.cpp
 )
 
 target_link_libraries(fb_utils_test
 		fb::fb_utils
 		fb::fb_utils::flags
+		fb::fb_utils::program_options
+		fb::fb_utils::ini_parser
 		fb::fb_utils::program_options
 	    Boost::disable_autolinking
         Boost::boost
