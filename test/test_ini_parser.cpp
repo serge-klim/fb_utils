@@ -117,6 +117,7 @@ std::pair<std::string, std::string> broken_input[] = {
     {"\n\n=b"s,"(3): unexpected '=' at the begining of line"s},
     {"["s, "(1): unmatched '['"s},
     //{"[#]"s, "(1"s}, // not sure how to treat it
+    {"[#"s, "(1): unmatched '['"s}, // not sure how to treat it
     {"\n[]"s,"(2): empty section"s},
     {"#include"s, "(1): filename expected after \"#include\""s},
     {"#include \""s, "(1): unmatched quote"s},
@@ -126,7 +127,7 @@ std::pair<std::string, std::string> broken_input[] = {
     {"#include \"test#xxx\""s, "(1): can't open #include file \"test#xxx\""s}
 };
 
-BOOST_DATA_TEST_CASE(parse_broke_test, boost::unit_test::data::make(broken_input), data) {
+BOOST_DATA_TEST_CASE(parse_broken_input_test, boost::unit_test::data::make(broken_input), data) {
    auto in = std::stringstream{data.first};
    BOOST_CHECK_EXCEPTION(utils::ini::parse(in), std::runtime_error, check_message{data.second});
 }

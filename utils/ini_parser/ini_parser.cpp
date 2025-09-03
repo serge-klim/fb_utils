@@ -196,8 +196,7 @@ std::vector<std::pair<char, std::string_view>> utils::v1::ini::detail::tokenize(
             break;
          }
          case '[':
-            last = input.find(']', first + 1);
-            if (last == std::string_view::npos)
+            if (last + 1 == n || (last = input.find(']', first + 1)) == std::string_view::npos)
                throw std::runtime_error{"unmatched '['"};
             res.emplace_back('[', input.substr(first + 1, last - first - 1));
             break;
