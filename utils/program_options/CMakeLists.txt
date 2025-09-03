@@ -1,6 +1,8 @@
 ﻿find_package( Boost COMPONENTS program_options url log log_setup REQUIRED )
 
-add_library (fb_utils_program_options INTERFACE)
+add_library (fb_utils_program_options STATIC
+                ini_parser.cpp
+)
 
 target_sources(fb_utils_program_options PUBLIC FILE_SET HEADERS
                 FILES
@@ -8,6 +10,7 @@ target_sources(fb_utils_program_options PUBLIC FILE_SET HEADERS
                  validators/net.hpp
                  net.hpp
                  chrono.hpp
+                 ini_parser.hpp
               )
 
 target_include_directories(fb_utils_program_options INTERFACE
@@ -18,7 +21,9 @@ target_include_directories(fb_utils_program_options INTERFACE
 add_library(fb::fb_utils::program_options ALIAS fb_utils_program_options)
 
 target_link_libraries(fb_utils_program_options 
-                        INTERFACE 
+                        PRIVATE
+                        fb::fb_utils::ini_parser
+                        PUBLIC 
                         Boost::boost
                         Boost::program_options
                         Boost::url
