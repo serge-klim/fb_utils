@@ -51,7 +51,8 @@ boost::system::error_code utils::set_thread_priority(priority prio, std::thread:
          priority_class = REALTIME_PRIORITY_CLASS;
          thread_priority = THREAD_PRIORITY_TIME_CRITICAL;
          break;
-      case priority::normal:
+       case priority::normal:
+         break;
    }
 
    return SetPriorityClass(GetCurrentProcess(), priority_class) == 0
