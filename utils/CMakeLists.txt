@@ -20,6 +20,7 @@ target_sources(fb_utils PUBLIC FILE_SET HEADERS
                  huge_pages.hpp
                  workarounds.hpp
                  histogram/chrono_axes.hpp
+                 vt.hpp
                  $<$<BOOL:${WIN32}>:win/experemental/sysinfo.hpp>
               )
 

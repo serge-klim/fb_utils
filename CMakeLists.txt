@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option (BUILD_TESTS "build tests" ON)
+option (BUILD_BENCHMARK "build benchmark" ON)
 
 add_subdirectory(utils)
 add_subdirectory(utils/flags)
+add_subdirectory(utils/simd)
 add_subdirectory(utils/program_options)
 
 if(BUILD_TESTS)
@@ -17,3 +19,9 @@ if(BUILD_TESTS)
   add_subdirectory(test)
 endif ()
 
+if (BUILD_BENCHMARK)
+   find_package(benchmark CONFIG)
+   if(benchmark_FOUND)
+     add_subdirectory(benchmark)
+   endif ()
+endif ()
