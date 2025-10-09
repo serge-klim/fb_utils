@@ -18,7 +18,7 @@ constexpr std::size_t vector_size() noexcept {
    if constexpr (bits <= 128)
       return 128;
 #ifdef __AVX__
-   else if constexpr (bits <= 256)
+   /*else*/ if constexpr (bits <= 256)
       return 256;
 #ifdef __AVX512F__
    else if constexpr (bits <= 512)
@@ -31,8 +31,60 @@ constexpr std::size_t vector_size() noexcept {
       return 10240;
 }
 
+template<typename T>
+constexpr bool can_vectorize(std::size_t size) noexcept {
+   return detail::vector_size<sizeof(T) * size>() <= 512;
+}
+
 template <std::size_t Size>
 struct vector;
+
+template <>
+struct vector<128> {
+   template <typename T, std::size_t Size>
+   static auto load(std::span<T, Size> const& s) {
+      if constexpr (Size * sizeof(T) == sizeof(data))
+         return _mm_loadu_si128(reinterpret_cast<__m128i const*>(s.data()));
+      else {
+         auto tmp = std::array<std::byte, 128 / 8>{};
+         std::memcpy(tmp.data(), s.data(), Size * sizeof(T) / sizeof(std::byte));
+         return _mm_loadu_si128(reinterpret_cast<__m128i const*>(tmp.data()));
+      }
+   }
+   __m128i data;
+};
+
+template <typename T>
+   requires(std::is_integral_v<T> && sizeof(T) == sizeof(std::uint8_t))
+std::uint8_t find_first(__m128i& data, T value) noexcept {
+   auto comparand = _mm_set1_epi8(static_cast<char>(value));
+   auto const res = static_cast<unsigned int>(_mm_movemask_epi8(_mm_cmpeq_epi8(data, comparand)));
+   return res != 0 ? static_cast<std::uint8_t>(_tzcnt_u32(res) * sizeof(std::byte) / sizeof(T)) : (std::numeric_limits<std::uint8_t>::max)();
+}
+
+template <typename T>
+   requires(std::is_integral_v<T> && sizeof(T) == sizeof(std::uint16_t))
+std::uint8_t find_first(__m128i& data, T value) noexcept {
+   auto comparand = _mm_set1_epi16(static_cast<short>(value));
+   auto const res = static_cast<unsigned int>(_mm_movemask_epi8(_mm_cmpeq_epi16(data, comparand)));
+   return res != 0 ? static_cast<std::uint8_t>(_tzcnt_u32(res) * sizeof(std::byte) / sizeof(T)) : (std::numeric_limits<std::uint8_t>::max)();
+}
+
+template <typename T>
+   requires(std::is_integral_v<T> && sizeof(T) == sizeof(std::uint32_t))
+std::uint8_t find_first(__m128i& data, T value) noexcept {
+   auto comparand = _mm_set1_epi32(static_cast<int>(value));
+   auto const res = static_cast<unsigned int>(_mm_movemask_epi8(_mm_cmpeq_epi32(data, comparand)));
+   return res != 0 ? static_cast<std::uint8_t>(_tzcnt_u32(res) * sizeof(std::byte) / sizeof(T)) : (std::numeric_limits<std::uint8_t>::max)();
+}
+
+template <typename T>
+   requires(std::is_integral_v<T> && sizeof(T) == sizeof(std::uint64_t))
+std::uint8_t find_first(__m128i& data, T value) noexcept {
+   auto comparand = _mm_set1_epi64x(static_cast<long long>(value));
+   auto const res = static_cast<unsigned int>(_mm_movemask_epi8(_mm_cmpeq_epi64(data, comparand)));
+   return res != 0 ? static_cast<std::uint8_t>(_tzcnt_u32(res) * sizeof(std::byte) / sizeof(T)) : (std::numeric_limits<std::uint8_t>::max)();
+}
 
 template <>
 struct vector<256> {
@@ -150,43 +202,5 @@ class vector : detail::vector<detail::vector_size<sizeof(T), Size>()> {
 
 template <class T, std::size_t Size>
 vector(std::array<T, Size>) -> vector<T, detail::vector_size<sizeof(T), Size>() / (sizeof(T) * 8)>;
-
-
-    //vector<T, detail::vector_size<Size * (sizeof(T) * 8 / sizeof(std::uint8_t))>() / (sizeof(T) * 8)>;
-
-// template <typename T, std::size_t Size>
-//    requires(Size * sizeof(T) < sizeof(__m256i))
-// class searcher {
-//  public:
-//    searcher(std::span<T, Size> s)
-//        : values_{load(s)} {
-//    }
-//    static __m256i load(std::span<T, Size> const& s) {
-//       if constexpr (Size == sizeof(__m256i))
-//          return _mm256_loadu_si256(static_cast<__m256i const*>(s.data()));
-//       else {
-//          auto tmp = std::array<std::byte, 256 / 8>{};
-//          std::memcpy(tmp.data(), s.data(), Size * sizeof(T) / sizeof(std::byte));
-//          return _mm256_loadu_si256(reinterpret_cast<__m256i const*>(tmp.data()));
-//       }
-//    }
-//    auto raw(T value) noexcept {
-//       auto comparand = _mm256_set1_epi16(static_cast<short>(value));
-//       auto const res = static_cast<unsigned int>(_mm256_movemask_epi8(_mm256_cmpeq_epi16(values_, comparand)));
-//       return _tzcnt_u32(res) * sizeof(std::byte) / sizeof(T);
-//    }
-//
-//  private:
-//    __m256i values_;
-// };
-//
-// template <class T, std::size_t N>
-// searcher(std::array<T, N>) -> searcher<T, N>;
-
-// template<typename T, std::size_t Size>
-// requires(Size * sizeof(T) / sizeof(std::uint8_t) * 8 < 512)
-// void find(std::span<T, Size> s, T&& value) {
-//    return searcher<T, Size>{s}(value);
-// }
 
 }}} // namespace utils::v1::simd
