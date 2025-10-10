@@ -12,18 +12,18 @@ namespace utils { inline namespace v1 { namespace simd {
 
 namespace detail {
 
-template <std::size_t SizeOf, std::size_t N = 1>
-constexpr std::size_t vector_size() noexcept {
-   constexpr auto bits =  SizeOf/sizeof(std::uint8_t) * 8 * N;
-   if constexpr (bits <= 128)
+template <typename T>
+constexpr std::size_t vector_size(std::size_t size = 1) noexcept {
+   auto bits = sizeof(T) / sizeof(std::uint8_t) * 8 * size;
+   if (bits <= 128)
       return 128;
 #ifdef __AVX__
-   /*else*/ if constexpr (bits <= 256)
+   /*else*/ if (bits <= 256)
       return 256;
 #ifdef __AVX512F__
-   else if constexpr (bits <= 512)
+   else if (bits <= 512)
       return 512;
-   else if constexpr (bits <= 1024)
+   else if (bits <= 1024)
       return 1024;
 #endif // __AVX512F__
 #endif // __AVX__
@@ -33,7 +33,7 @@ constexpr std::size_t vector_size() noexcept {
 
 template<typename T>
 constexpr bool can_vectorize(std::size_t size) noexcept {
-   return detail::vector_size<sizeof(T) * size>() <= 512;
+   return detail::vector_size<T>(size) <= 512;
 }
 
 template <std::size_t Size>
@@ -183,16 +183,20 @@ std::uint8_t find_first(__m512i& data, T value) noexcept {
 } // namespace detail
 
 template <std::integral T, std::size_t Size>
-class vector : detail::vector<detail::vector_size<sizeof(T), Size>()> {
-   using base_t = detail::vector<detail::vector_size<sizeof(T), Size>()>;
+class vector : detail::vector<detail::vector_size<T>(Size)> {
+   using base_t = detail::vector<detail::vector_size<T>(Size)>;
  public:
    using size_type = std::uint8_t;
-   template <typename V>
-   requires requires(V const& v) { std::span{v}; }
-   vector(V const& v) noexcept
-       : base_t{base_t::load(std::span{v})}
+   template <std::size_t N>
+   requires (N <= Size)
+   vector(std::span<T const, N> v) noexcept
+       : base_t{base_t::load(v)}
        , size_{static_cast<size_type>(std::span{v}.size())}{
    }
+   template <std::size_t N>
+   requires (N <= Size)
+   vector(std::array<T, N> const& v) noexcept : vector(std::span<T const, N>{v.data(), N}) {}
+
    constexpr size_type size() const noexcept { return size_; }
    static constexpr size_type capacity() noexcept { return static_cast<size_type>(Size); }
    auto find_first(T value) noexcept { return detail::find_first(base_t::data, value); }
@@ -200,7 +204,13 @@ class vector : detail::vector<detail::vector_size<sizeof(T), Size>()> {
    size_type size_ = 0;
 };
 
-template <class T, std::size_t Size>
-vector(std::array<T, Size>) -> vector<T, detail::vector_size<sizeof(T), Size>() / (sizeof(T) * 8)>;
+template <class T, std::size_t N>
+vector(std::span<T, N>) -> vector<T, detail::vector_size<T>(N) / (sizeof(T) * 8)>;
+
+template <class T, std::size_t N>
+vector(std::array<T, N>) -> vector<T, detail::vector_size<T>(N)  / (sizeof(T) * 8)>;
+
+template <class T, std::size_t N>
+vector(T (&)[N]) -> vector<T, detail::vector_size<T>(N) / (sizeof(T) * 8)>;
 
 }}} // namespace utils::v1::simd
