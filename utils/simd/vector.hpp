@@ -10,30 +10,31 @@
 
 namespace utils { inline namespace v1 { namespace simd {
 
+template <typename T>
+constexpr std::size_t bit_size(std::size_t size = 1) noexcept {
+   return sizeof(T) / sizeof(std::uint8_t) * 8 * size;
+}
+            
 namespace detail {
 
 template <typename T>
 constexpr std::size_t vector_size(std::size_t size = 1) noexcept {
-   auto bits = sizeof(T) / sizeof(std::uint8_t) * 8 * size;
+   auto bits = bit_size<T>(size);
+#ifdef __SSE__
    if (bits <= 128)
       return 128;
-#ifdef __AVX__
-   /*else*/ if (bits <= 256)
+#ifdef __AVX2__
+   if (bits <= 256)
       return 256;
-#ifdef __AVX512F__
-   else if (bits <= 512)
+#ifdef __AVX512BW__
+   if (bits <= 512)
       return 512;
-   else if (bits <= 1024)
+   if (bits <= 1024)
       return 1024;
-#endif // __AVX512F__
-#endif // __AVX__
-   else
-      return 10240;
-}
-
-template<typename T>
-constexpr bool can_vectorize(std::size_t size) noexcept {
-   return detail::vector_size<T>(size) <= 512;
+#endif // __AVX512BW__
+#endif // __AVX2__
+#endif // __SSE__
+     return 1024 * 10;
 }
 
 template <std::size_t Size>
@@ -197,6 +198,9 @@ class vector : detail::vector<detail::vector_size<T>(Size)> {
    requires (N <= Size)
    vector(std::array<T, N> const& v) noexcept : vector(std::span<T const, N>{v.data(), N}) {}
 
+   template <std::size_t N>
+   vector(T (&v)[N]) noexcept : vector(std::span<T const, N>{v,}) {}
+
    constexpr size_type size() const noexcept { return size_; }
    static constexpr size_type capacity() noexcept { return static_cast<size_type>(Size); }
    auto find_first(T value) noexcept { return detail::find_first(base_t::data, value); }
@@ -205,12 +209,17 @@ class vector : detail::vector<detail::vector_size<T>(Size)> {
 };
 
 template <class T, std::size_t N>
-vector(std::span<T, N>) -> vector<T, detail::vector_size<T>(N) / (sizeof(T) * 8)>;
+vector(std::span<T, N>) -> vector<T, (detail::vector_size<T>(N) * sizeof(std::uint8_t))/ (sizeof(T) * 8)>;
 
 template <class T, std::size_t N>
-vector(std::array<T, N>) -> vector<T, detail::vector_size<T>(N)  / (sizeof(T) * 8)>;
+vector(std::array<T, N>) -> vector<T, (detail::vector_size<T>(N) * sizeof(std::uint8_t))/ (sizeof(T) * 8)>;
 
 template <class T, std::size_t N>
-vector(T (&)[N]) -> vector<T, detail::vector_size<T>(N) / (sizeof(T) * 8)>;
+vector(T (&)[N]) -> vector<T, (detail::vector_size<T>(N) * sizeof(std::uint8_t))/ (sizeof(T) * 8)>;
 
+template <typename T>
+constexpr bool can_vectorize(std::size_t size) noexcept {
+   return detail::vector_size<T>(size) <= 512;
+}
+            
 }}} // namespace utils::v1::simd
