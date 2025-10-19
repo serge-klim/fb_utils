@@ -2,7 +2,10 @@
 
 target_sources(fb_utils_simd PUBLIC FILE_SET HEADERS
                 FILES
-                 vector.hpp
+				detail.hpp
+				vector.hpp
+				x64/vector.hpp
+				not_supported/vector.hpp
               )
 
 target_include_directories(fb_utils_simd INTERFACE
