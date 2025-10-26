@@ -45,7 +45,19 @@ class vector : detail::vector<detail::vector_size<T>(Size)> {
       size_ = static_cast<size_type>(std::span{v}.size());
       return *this;
    }
-
+   vector& operator=(std::span<T const, std::dynamic_extent> v) noexcept {
+      if (v.size() < capacity()) {
+         auto tmp = std::array<T, capacity()>{};
+         std::copy(cbegin(v), cend(v), begin(tmp));
+         base_t::data = base_t::load(std::span{tmp});
+         size_ = v.size();
+      } else {
+         auto span = std::span<T const, capacity()>{*static_cast<T const(*const)[capacity()]>(static_cast<void const*>(v.data()))};
+         base_t::data = base_t::load(span);
+         size_ = capacity();
+      }
+      return *this;
+   }
    constexpr size_type size() const noexcept { return size_; }
    static constexpr size_type capacity() noexcept { return base_t::template capacity<T>(); }
    auto find_first(T value) const noexcept { return detail::find_first(base_t::data, value); }
