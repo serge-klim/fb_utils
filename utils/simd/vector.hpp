@@ -1,5 +1,5 @@
 ﻿#pragma once
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
 #include "x64/vector.hpp"
 #else
 #include "not_supported/vector.hpp"
@@ -17,7 +17,7 @@ namespace utils { inline namespace v1 { namespace simd {
          
 
 
-template <std::integral T, std::size_t Size>
+template <std::integral T, std::size_t Size = detail::max_vector_size<T>()>
 class vector : detail::vector<detail::vector_size<T>(Size)> {
    using base_t = detail::vector<detail::vector_size<T>(Size)>;
  public:
@@ -48,9 +48,18 @@ class vector : detail::vector<detail::vector_size<T>(Size)> {
 
    constexpr size_type size() const noexcept { return size_; }
    static constexpr size_type capacity() noexcept { return base_t::template capacity<T>(); }
-   auto find_first(T value) noexcept { return detail::find_first(base_t::data, value); }
+   auto find_first(T value) const noexcept { return detail::find_first(base_t::data, value); }
  private:
    size_type size_ = 0;
+};
+
+template <std::integral T>
+class vector <T, 0> {
+ public:
+   using size_type = std::uint8_t;
+   static constexpr size_type size() noexcept { return 0; }
+   static constexpr size_type capacity() noexcept { return 0; }
+   static constexpr auto find_first(T value) noexcept { return size() + 1; }
 };
 
 template <class T, std::size_t N>
