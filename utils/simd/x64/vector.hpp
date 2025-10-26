@@ -31,7 +31,21 @@ constexpr std::size_t vector_size(std::size_t size = 1) noexcept {
    if (bits <= 1024)
       return 1024;
 #endif // __AVX512BW__
-     return 1024 * 10;
+   return bits & (std::size_t{1}<< (bit_size<std::size_t>(size)-1));
+}
+
+template <typename T>
+constexpr std::size_t max_vector_size() noexcept {
+   auto bits = bit_size<T>();
+#ifdef __AVX512BW__
+   return 512 / bits;
+#elif defined(__AVX2__)
+   return 256 / bits;
+#elif (defined(__SSE__) || defined(__AVX__)) && (!defined(__GNUC__) || defined(__BMI__))
+   return 128 / bits;
+#else
+   return 0;
+#endif  
 }
 
 template <std::size_t Size>
@@ -83,7 +97,7 @@ struct vector<128> {
          return _mm_loadu_si128(reinterpret_cast<__m128i const*>(tmp.data()));
       }
    }
-   __m128i data;
+   mutable __m128i data;
 };
 
 template <typename T>
@@ -132,7 +146,7 @@ struct vector<256> {
          return _mm256_loadu_si256(reinterpret_cast<__m256i const*>(tmp.data()));
       }
    }
-   __m256i data;
+   mutable __m256i data;
 };
 
 template <typename T>
@@ -181,7 +195,7 @@ struct vector<512> {
          return _mm512_loadu_si512(reinterpret_cast<__m512i const*>(tmp.data()));
       }
    }
-   __m512i data;
+   mutable __m512i data;
 };
 
 } // namespace detail

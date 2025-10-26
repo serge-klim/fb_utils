@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option (BUILD_TESTS "build tests" ON)
-option (BUILD_BENCHMARK "build benchmark" ON)
+option (BUILD_BENCHMARK "build benchmark" OFF)
 
 add_subdirectory(utils)
 add_subdirectory(utils/flags)
