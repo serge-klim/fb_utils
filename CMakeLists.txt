@@ -9,6 +9,7 @@ option (BUILD_TESTS "build tests" ON)
 
 add_subdirectory(utils)
 add_subdirectory(utils/flags)
+add_subdirectory(utils/ini_parser)
 add_subdirectory(utils/program_options)
 
 if(BUILD_TESTS)
