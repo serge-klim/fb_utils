@@ -52,6 +52,16 @@ jobs:
             c_compiler: cl
 
     steps:
+    # https://github.com/lukka/CppCMakeVcpkgTemplate/blob/9cc7c943eb7a312fe2d785819850815ac36e4028/.github/workflows/hosted-pure-workflow.yml#L43
+    # Set env vars needed for vcpkg to leverage the GitHub Action cache as a storage
+    # for Binary Caching.
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
     - name: Checkout    
       uses: actions/checkout@v4    
 
@@ -75,7 +85,7 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
+        
     - name: Configure CMake
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
