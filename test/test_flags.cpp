@@ -5,6 +5,11 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/test_tools.hpp>
 #include <array>
+#include <string>
+#include <vector>
+#include <utility>
+#include <stdexcept>
+#include <cstdint>
 
 namespace {
 
@@ -92,6 +97,9 @@ std::pair<std::string, unsigned int> flags_tuples[] = {
     {"", 0},
     {"0", 0},
     {"0|0|0", 0},
+    {"10|10|10", 10},
+    {"10|10|10", 10},
+    {"3|0|4|0x3c", 63},
     {"0xa|0xa|10", 10},
     {"RTE_ETH_RX_OFFLOAD_VLAN_STRIP", 1},
     {"0|RTE_ETH_RX_OFFLOAD_VLAN_STRIP", 1},

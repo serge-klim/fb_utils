@@ -75,6 +75,7 @@ void log(std::uint32_t logtype, log_level level, Format&& fmt,  Args&& ...args) 
 	}
 	//buffer.push_back('\0');
 	//rte_log(static_cast<std::uint32_t>(level), logtype, buffer.data());
+	//could fail!
 	fwrite(buffer.data(), sizeof(char), buffer.size(), out);
 	//fflush(out); // not sure it make sense at the point
 }

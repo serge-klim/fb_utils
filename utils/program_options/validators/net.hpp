@@ -7,6 +7,8 @@
 #include <boost/url/url.hpp>
 #include <boost/url/grammar/error.hpp>
 #include <boost/url/parse.hpp>
+#include <vector>
+#include <string>
 #include <stdexcept>
 
 namespace boost { 

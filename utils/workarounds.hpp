@@ -1,7 +1,7 @@
 #pragma once
 #include <iterator>
 //#include <concept>
-
+#include <ranges>
 
 namespace utils { inline namespace v1 { namespace workarounds {
 template <typename T, typename R>

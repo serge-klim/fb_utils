@@ -1,5 +1,5 @@
 #include "../thread.hpp"
-#include "experemental/sysinfo.hpp"
+#include "experimental/sysinfo.hpp"
 #include <boost/winapi/thread.hpp>
 #include <boost/winapi/get_last_error.hpp>
 #include <boost/system/system_error.hpp>
@@ -88,7 +88,7 @@ utils::v1x::cpu_set utils::v1x::get_thread_cpu_set(std::thread::native_handle_ty
       case ERROR_INSUFFICIENT_BUFFER:
          break;
       default:
-         throw boost::system::system_error(error, "GetThreadSelectedCpuSets filed");
+         throw boost::system::system_error(error, "GetThreadSelectedCpuSets failed");
    }
 
    auto res = cpu_set(n);

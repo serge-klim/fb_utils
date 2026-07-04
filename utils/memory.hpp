@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <memory>
 #include <utility>
+#include <cstddef>
 
 namespace utils { inline namespace v1 {
 
@@ -18,7 +19,7 @@ struct free_memory
 
 [[nodiscard]] std::size_t page_size() noexcept;
 using memory_block = std::unique_ptr<void, utils::detail::free_memory>;
-[[nodiscard]] memory_block alloc_mem(size_t size /*, int socket_id = 0*/) noexcept;
+[[nodiscard]] memory_block alloc_mem(std::size_t size /*, int socket_id = 0*/) noexcept;
 
 
 }} // namespace utils::v1

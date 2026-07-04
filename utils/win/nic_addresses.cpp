@@ -5,7 +5,7 @@ template <typename T>
 auto make_buffer(std::size_t size_in_bytes) { return std::vector<T>((size_in_bytes - 1 + sizeof(T)) / sizeof(T)); }
 
 std::vector<IP_ADAPTER_ADDRESSES> utils::net::get_adapters_addresses(unsigned long family, unsigned long flags, std::size_t retries /*= 3*/) {
-   constexpr auto min_size = static_cast<unsigned long>(1500); // 15KB  as recommended in remark https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses
+   constexpr auto min_size = static_cast<unsigned long>(15*1024); // 15KB  as recommended in remark https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses
    for (auto size = min_size;;) {
       auto addresses = make_buffer<IP_ADAPTER_ADDRESSES>(size);
       switch (auto result = GetAdaptersAddresses(family, flags, nullptr, addresses.data(), &size)) {
@@ -15,7 +15,7 @@ std::vector<IP_ADAPTER_ADDRESSES> utils::net::get_adapters_addresses(unsigned lo
             if (retries-- > 1)
                break;
          default:
-            throw boost::system::system_error(boost::winapi::GetLastError(), boost::system::system_category(), "GetAdaptersAddresses filed");
+            throw boost::system::system_error(result, boost::system::system_category(), "GetAdaptersAddresses failed");
       }
    }
 }

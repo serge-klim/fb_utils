@@ -36,16 +36,13 @@ namespace x3 = boost::spirit::x3;
 
 inline auto endpoint(unsigned short default_port = 0) noexcept
 {
-   static auto const parser = x3::rule</*struct*/ net::endpoint, net::endpoint>{"net::endpoint"} = +(x3::char_ - ':') >> ((':' >> x3::ushort_) | x3::attr(default_port));
-   return parser;
+   return x3::rule</*struct*/ net::endpoint, net::endpoint>{"net::endpoint"} = +(x3::char_ - ':') >> ((':' >> x3::ushort_) | x3::attr(default_port));
 }
 
 inline auto scheme_endpoint(unsigned short default_port = 0) noexcept
 {
-   static auto const parser = x3::rule</*struct*/ net::scheme_endpoint, net::scheme_endpoint>{"net::scheme_endpoint"} = 
-																								  (+(x3::char_ - ':') >> (("://" >> endpoint()) |( ':' >> x3::attr(net::endpoint{}))))
-																								  ;
-   return parser;
+   return x3::rule</*struct*/ net::scheme_endpoint, net::scheme_endpoint>{"net::scheme_endpoint"} = 
+																								  (+(x3::char_ - ':') >> (("://" >> endpoint(default_port)) | (':' >> x3::attr(net::endpoint{{}, default_port}))));
 }
 
 //auto endpoint(unsigned short default_port = 0) noexcept
@@ -64,8 +61,7 @@ inline auto scheme_endpoint(unsigned short default_port = 0) noexcept
 
 inline auto credentials() noexcept
 {
-   static auto const parser = x3::rule</*struct*/ net::credentials, net::credentials>{"net::credentials"} = +(x3::char_ - ':') >> ':' >> +x3::char_;
-   return parser;
+   return x3::rule</*struct*/ net::credentials, net::credentials>{"net::credentials"} = +(x3::char_ - ':') >> ':' >> +x3::char_;
 }
 
 }} // namespace net::parser::v0

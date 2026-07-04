@@ -17,10 +17,11 @@ target_sources(fb_utils PUBLIC FILE_SET HEADERS
                  thread.hpp
                  sysinfo.hpp
                  memory.hpp
+                 buffer.hpp
                  huge_pages.hpp
                  workarounds.hpp
                  histogram/chrono_axes.hpp
-                 $<$<BOOL:${WIN32}>:win/experemental/sysinfo.hpp>
+                 $<$<BOOL:${WIN32}>:win/experimental/sysinfo.hpp>
               )
 
 target_include_directories(fb_utils INTERFACE

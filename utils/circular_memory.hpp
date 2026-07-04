@@ -3,6 +3,9 @@
 #include <iterator>
 #include <utility>
 #include <new>
+#include <memory>
+#include <cstring>
+#include <cassert>
 
 namespace utils { inline namespace v1 {
 
@@ -53,6 +56,7 @@ class circular_memory
 
 template <typename Counter>
 void* utils::v1::circular_memory<Counter>::allocate(size_type size, std::size_t alignment /*= 1*/) noexcept {   
+   assert(size != 0);
    assert(tail_ <= size_);
    auto const end = tail_ + free_.counter;
    auto const split_space = end > size_
@@ -95,7 +99,7 @@ void utils::v1::circular_memory<Counter>::release(void* mem) noexcept {
 template <typename Counter>
 utils::v1::circular_memory<Counter>::size_type utils::v1::circular_memory<Counter>::used_memory(void const* pointer) const noexcept {
    size_type res;
-   std::memcpy(&res, std::prev(static_cast<size_type const*>(pointer)), sizeof(res));
+   std::memcpy(&res, static_cast<char const*>(pointer) - sizeof(res), sizeof(res));
    return res;
 }
 

@@ -7,6 +7,8 @@
 #include <ranges>
 #include <ostream>
 #include <iomanip>
+#include <vector>
+#include <string>
 
 namespace histogram::axis { inline namespace v1 {
 

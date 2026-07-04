@@ -1,4 +1,5 @@
-﻿#include "../memory.hpp"
+﻿#include "../buffer.hpp"
+#include "../memory.hpp"
 #include "../sysinfo.hpp"
 #include "Windows.h"
 #include <boost/winapi/get_last_error.hpp>
@@ -10,11 +11,10 @@
 
 namespace detail {
 
- std::vector<char> logical_processor_info(LOGICAL_PROCESSOR_RELATIONSHIP type, boost::system::error_code& error)
- {
+utils::aligned_buffer<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX> logical_processor_info(LOGICAL_PROCESSOR_RELATIONSHIP type, boost::system::error_code& error) {
     if (auto f = reinterpret_cast<decltype(&GetLogicalProcessorInformationEx)>(GetProcAddress(GetModuleHandleA("kernel32"), "GetLogicalProcessorInformationEx")))
     {
-       auto buffer = std::vector<char>(5 * sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX));
+       auto buffer = utils::make_bytesize_vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(5 * sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX));
        for (;;) {
           auto size = static_cast<boost::winapi::DWORD_>(buffer.size());
           if (f(type, reinterpret_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*>(buffer.data()), &size)) {
@@ -62,9 +62,12 @@ std::vector<utils::group_afinity> utils::v1::numa_node_workset(unsigned short no
 {
     auto error = boost::system::error_code{};
     auto logical_processor_info = ::detail::logical_processor_info(RelationNumaNodeEx, error);
-    if (error) 
-        logical_processor_info = ::detail::logical_processor_info(RelationNumaNode, error);
-
+    if (error) {
+       error = boost::system::error_code{};
+       logical_processor_info = ::detail::logical_processor_info(RelationNumaNode, error);
+       if (error)
+          throw boost::system::system_error{error, "GetLogicalProcessorInformationEx failed"};
+    }
     static_assert(sizeof(KAFFINITY) == sizeof(group_afinity::mask), "mask has to be adjusted");
     auto res = std::vector<group_afinity>{};
     res.reserve(logical_processor_info.size() / sizeof(NUMA_NODE_RELATIONSHIP));
@@ -88,6 +91,8 @@ std::vector<utils::core_info> utils::v1::cores_info()
 {
     auto error = boost::system::error_code{};
     auto logical_processor_info = ::detail::logical_processor_info(RelationProcessorCore, error);
+    if (error)
+       throw boost::system::system_error{error, "GetLogicalProcessorInformationEx failed"};
 
     auto res = std::vector<core_info>{};
     res.reserve(logical_processor_info.size() / sizeof(PROCESSOR_RELATIONSHIP));
@@ -100,8 +105,8 @@ std::vector<utils::core_info> utils::v1::cores_info()
         //info->Processor.Flags == LTP_PC_SMT
         auto groups = std::vector<group_afinity>(info->Processor.GroupCount);
         for (auto i = decltype(info->Processor.GroupCount){0}; i != info->Processor.GroupCount; ++i) {
-          groups[i].group = static_cast<unsigned short>(info->NumaNode.GroupMasks[i].Group);
-          groups[i].mask = static_cast<std::uint64_t>(info->NumaNode.GroupMasks[i].Mask);
+           groups[i].group = static_cast<unsigned short>(info->Processor.GroupMask[i].Group);
+           groups[i].mask = static_cast<std::uint64_t>(info->Processor.GroupMask[i].Mask);
         }
         res.emplace_back(static_cast<unsigned short>(info->Processor.EfficiencyClass), std::move(groups));
     }
@@ -168,15 +173,15 @@ std::vector<utils::core_info> utils::v1::cores_info()
 
 std::vector<utils::cpu_info> utils::v1::cpus_info()
 {
-    auto cpu_set_info = std::vector<char>(sizeof(SYSTEM_CPU_SET_INFORMATION) * 16);
+    auto cpu_set_info = utils::make_bytesize_vector<SYSTEM_CPU_SET_INFORMATION>(sizeof(SYSTEM_CPU_SET_INFORMATION) * 16);
     unsigned long size = 0;
     if (!GetSystemCpuSetInformation(reinterpret_cast<PSYSTEM_CPU_SET_INFORMATION>(cpu_set_info.data()), static_cast<unsigned long>(cpu_set_info.size()), &size, 0, 0)) {
         auto error = boost::winapi::GetLastError();
         if (error != ERROR_INSUFFICIENT_BUFFER)
-          throw boost::system::system_error(error, boost::system::system_category(), "GetSystemCpuSetInformation filed");
+          throw boost::system::system_error(error, boost::system::system_category(), "GetSystemCpuSetInformation failed");
         cpu_set_info.resize(size);
         if (!GetSystemCpuSetInformation(reinterpret_cast<PSYSTEM_CPU_SET_INFORMATION>(cpu_set_info.data()), static_cast<unsigned long>(cpu_set_info.size()), &size, 0, 0))
-          throw boost::system::system_error(boost::winapi::GetLastError(), boost::system::system_category(), "GetSystemCpuSetInformation filed");
+          throw boost::system::system_error(boost::winapi::GetLastError(), boost::system::system_category(), "GetSystemCpuSetInformation failed");
     }
 
     auto res = std::vector<cpu_info>{};

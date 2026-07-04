@@ -7,6 +7,7 @@
 #include <vector>
 #include <list>
 #include <chrono>
+#include <stdexcept>
 
 namespace boost { namespace program_options { 
 //namespace std { namespace chrono {// has to be in std::chrono namcpese:( to make it reacheble for boost::program_options

@@ -10,6 +10,7 @@
 #include <boost/winapi/get_last_error.hpp>
 #include <boost/system/system_error.hpp>
 #include <vector>
+#include <string>
 #include <tuple>
 #include <cstring>
 #include <cassert>

@@ -2,6 +2,7 @@
 #include <utility>
 #include <vector>
 #include <cstdint>
+#include <cstddef>
 
 namespace utils { inline namespace v1 {
 

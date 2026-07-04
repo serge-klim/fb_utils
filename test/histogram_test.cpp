@@ -4,6 +4,8 @@
 #include <boost/histogram/ostream.hpp>
 #include <set>
 #include <iterator>
+#include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <string>
 #include <chrono>

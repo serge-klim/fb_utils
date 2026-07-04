@@ -24,7 +24,7 @@ boost::system::error_code utils::pin_thread_to_core(unsigned int core_id, std::t
    cpu_set_t cpuset;
    CPU_ZERO(&cpuset);
    CPU_SET(core_id, &cpuset);
-   auto error = pthread_setaffinity_np(handle, sizeof(cpuset), &cpuset) == 0;
+   auto error = pthread_setaffinity_np(handle, sizeof(cpuset), &cpuset);
    return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
 }
 
@@ -59,7 +59,7 @@ boost::system::error_code utils::set_thread_priority(int priority, std::thread::
    //  auto params = sched_param{0};
    //  params.sched_priority = priority;
    //  return pthread_setschedparam(thread, priority) != 0;
-   auto error = pthread_setschedprio(handle, priority) != 0;
+   auto error = pthread_setschedprio(handle, priority);
    return error == 0 ? boost::system::error_code{} : boost::system::error_code{error, boost::system::system_category()};
 }
 

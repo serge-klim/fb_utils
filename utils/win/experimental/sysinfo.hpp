@@ -1,5 +1,6 @@
 #pragma once
 #include "windows.h"
+#include "../../buffer.hpp"
 #include <boost/stl_interfaces/iterator_interface.hpp>
 // #include <boost/stl_interfaces/view_interface.hpp>
 #include <boost/system/system_error.hpp>
@@ -7,7 +8,7 @@
 #include <vector>
 #include <ranges>
 
-namespace utils::experemental {
+namespace utils::experimental {
 inline namespace v1 {
 
 namespace detail {
@@ -47,15 +48,15 @@ class cpu_set_info
 //           boost::stl_interfaces::view_interface<cpu_set_info>
 {
  public:
-   cpu_set_info() : data_(sizeof(SYSTEM_CPU_SET_INFORMATION) * 32) {
+   cpu_set_info() : data_{make_bytesize_vector<SYSTEM_CPU_SET_INFORMATION>(sizeof(SYSTEM_CPU_SET_INFORMATION) * 32)} {
       unsigned long size = 0;
       if (!GetSystemCpuSetInformation(reinterpret_cast<PSYSTEM_CPU_SET_INFORMATION>(data_.data()), static_cast<ULONG>(data_.size()), &size, 0, 0)) {
          auto error = boost::winapi::GetLastError();
          if (error != ERROR_INSUFFICIENT_BUFFER)
-            throw boost::system::system_error(error, boost::system::system_category(), "GetSystemCpuSetInformation filed");
+            throw boost::system::system_error(error, boost::system::system_category(), "GetSystemCpuSetInformation failed");
          data_.resize(size);
          if (!GetSystemCpuSetInformation(reinterpret_cast<PSYSTEM_CPU_SET_INFORMATION>(data_.data()), static_cast<ULONG>(data_.size()), &size, 0, 0))
-            throw boost::system::system_error(boost::winapi::GetLastError(), boost::system::system_category(), "GetSystemCpuSetInformation filed");
+            throw boost::system::system_error(boost::winapi::GetLastError(), boost::system::system_category(), "GetSystemCpuSetInformation failed");
       }
       data_.resize(size);
    }
@@ -63,18 +64,18 @@ class cpu_set_info
    constexpr auto cend() const noexcept { return sys_set_info_iterator{data_.data() + data_.size()}; }
 
  private:
-   std::vector<char> data_;
+   utils::aligned_buffer<SYSTEM_CPU_SET_INFORMATION> data_;
 };
 
 constexpr auto begin(cpu_set_info const& info) noexcept { return info.cbegin(); }
 constexpr auto end(cpu_set_info const& info) noexcept { return info.cend(); }
 }
 
-}} // namespace utils::experemental::v1::detail
+}} // namespace utils::experimental::v1::detail
 #include <boost/stl_interfaces/view_interface.hpp>
 #include <ranges>
 
-namespace utils::experemental { inline namespace v1 {
+namespace utils::experimental { inline namespace v1 {
 
 auto cpu_set() {
    static const auto info = detail::cpu_set_info{};
@@ -87,4 +88,4 @@ auto cpu_set() {
    return std::ranges::subrange{begin(info), end(info)} | std::views::filter([](auto const& cpu_info) { return cpu_info.Type == CPU_SET_INFORMATION_TYPE::CpuSetInformation; }) | std::views::transform([](auto const& cpu_info) -> decltype(cpu_info.CpuSet) const& { return cpu_info.CpuSet; });
 }
 
-}} // namespace utils::experemental::v1
+}} // namespace utils::experimental::v1

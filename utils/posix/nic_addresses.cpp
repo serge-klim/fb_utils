@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <memory>
 #include <cstring>
 
 using ADDRESS_FAMILY = int;
@@ -30,8 +31,9 @@ std::vector<AddressFamily> utils::net::get_nic_addresses(std::string const& ifna
    auto res = std::vector<AddressFamily>{};
    struct ifaddrs* interface_array = nullptr;
    if (auto rc = getifaddrs(&interface_array) != -1) {
+      [[maybe_unused]] auto sentry = std::unique_ptr<ifaddrs, decltype(&freeifaddrs)>{interface_array, &freeifaddrs};
       for (auto addr = interface_array; addr != nullptr; addr = addr->ifa_next) {
-         if (ifname == addr->ifa_name && addr->ifa_addr->sa_family == detail::address_family<AddressFamily>::value) {
+         if (addr->ifa_addr != nullptr && ifname == addr->ifa_name && addr->ifa_addr->sa_family == detail::address_family<AddressFamily>::value) {
             res.push_back(AddressFamily{});
             // std::memcpy(&res.back(), addr->ifa_addr, sizeof(AddressFamily));
             ::detail::copy(res.back(), addr->ifa_addr);
@@ -48,7 +50,10 @@ std::vector<utils::net::nic_info> utils::net::get_nic_info() {
    auto res = std::vector<utils::net::nic_info>{};
    struct ifaddrs* interface_array = nullptr;
    if (auto rc = getifaddrs(&interface_array) != -1) {
+      [[maybe_unused]] auto sentry = std::unique_ptr<ifaddrs, decltype(&freeifaddrs)>{interface_array, &freeifaddrs};
       for (auto addr = interface_array; addr != nullptr; addr = addr->ifa_next) {
+         if (!addr->ifa_addr)
+            continue;
          auto end = std::end(res);
          auto i = std::find_if(begin(res), end, [&addr](auto const& info) {
             return info.name == addr->ifa_name;
