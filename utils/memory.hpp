@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "math.hpp"
 #include <memory>
 #include <utility>
 #include <cstddef>
@@ -6,7 +7,7 @@
 namespace utils { inline namespace v1 {
 
 template <typename T, typename B>
-inline constexpr auto size_in_blocks(T size, B block) noexcept { return (size + block - 1) / block; }
+inline constexpr auto size_in_blocks(T size, B block) noexcept { return div_ceil(size, block) /*(size + block - 1) / block*/; }
 
 namespace detail {
 

@@ -6,6 +6,9 @@ add_executable (fb_utils_test
 		test_net_parsers.cpp
 		test_ini_parser.cpp
 		histogram_test.cpp
+		test_cpu_clock.cpp
+		$<$<BOOL:${WIN32}>:windows/test_cpu_clock.cpp>
+
 )
 
 target_link_libraries(fb_utils_test

@@ -3,13 +3,17 @@ find_package(Boost COMPONENTS unit_test_framework REQUIRED )
 
 add_library (fb_utils
              $<$<BOOL:${WIN32}>:win/thread.cpp>
-             $<$<NOT:$<BOOL:${WIN32}>>:posix/thread.cpp>
+             $<$<NOT:$<BOOL:${WIN32}>>:linux/thread.cpp>
              $<$<BOOL:${WIN32}>:win/sysinfo.cpp>
-             $<$<NOT:$<BOOL:${WIN32}>>:posix/sysinfo.cpp>
+             $<$<NOT:$<BOOL:${WIN32}>>:linux/sysinfo.cpp>
              $<$<BOOL:${WIN32}>:win/memory.cpp>
-             $<$<NOT:$<BOOL:${WIN32}>>:posix/memory.cpp>
+             $<$<NOT:$<BOOL:${WIN32}>>:linux/memory.cpp>
              $<$<BOOL:${WIN32}>:win/huge_pages.cpp>
-             $<$<NOT:$<BOOL:${WIN32}>>:posix/huge_pages.cpp>
+             $<$<NOT:$<BOOL:${WIN32}>>:linux/huge_pages.cpp>
+             cpu_info.cpp
+             cpu_clock.cpp
+             $<$<BOOL:${WIN32}>:win/cpu_clock.cpp>
+             $<$<NOT:$<BOOL:${WIN32}>>:linux/cpu_clock.cpp>
 )
 
 target_sources(fb_utils PUBLIC FILE_SET HEADERS
@@ -21,6 +25,11 @@ target_sources(fb_utils PUBLIC FILE_SET HEADERS
                  huge_pages.hpp
                  workarounds.hpp
                  histogram/chrono_axes.hpp
+                 detail/cpu_clock.hpp
+                 cpu_clock.hpp
+                 cpu_info.hpp
+                 detail/x64/cpu_info.hpp
+                 math.hpp
                  $<$<BOOL:${WIN32}>:win/experimental/sysinfo.hpp>
               )
 
@@ -53,7 +62,7 @@ add_library (fb_utils_nic_addresses
                         win/nic_addresses.cpp
                  >
                  $<$<NOT:$<PLATFORM_ID:Windows>>:
-                        posix/nic_addresses.cpp
+                        linux/nic_addresses.cpp
                  >
              )
 
